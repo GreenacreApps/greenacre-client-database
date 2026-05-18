@@ -1,0 +1,20 @@
+{
+    "name":  "greenacre-client-app-netlify",
+    "version":  "1.0.0",
+    "private":  true,
+    "scripts":  {
+                    "dev":  "netlify dev",
+                    "build":  "echo Greenacre static app ready",
+                    "check":  "node --check app.js"
+                },
+    "dependencies":  {
+                         "@netlify/blobs":  "latest",
+                         "@netlify/functions":  "latest"
+                     },
+    "devDependencies":  {
+                            "netlify-cli":  "latest",
+                            "typescript":  "latest",
+                            "@types/node":  "latest"
+                        },
+    "packageManager":  "npm@11.14.1+sha512.6a8a4d67478497a2dbc6815cad72e64c43f33413717e242756047d466241ab39bee61e691683a64658e94496ec5f1a1c05e4a5ec62dcc773280dfd949443a367"
+}
