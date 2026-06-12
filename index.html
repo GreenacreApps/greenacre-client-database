@@ -40,7 +40,7 @@ select {
 
 .app-header {
   display: grid;
-  grid-template-columns: 180px minmax(260px, 1fr) 620px;
+  grid-template-columns: 180px minmax(260px, 1fr) 720px;
   align-items: start;
   gap: 5px 18px;
   padding: 4px 18px 5px;
@@ -110,7 +110,7 @@ h2 {
 
 .app-header > .header-actions {
   display: grid;
-  grid-template-columns: 84px 84px 190px;
+  grid-template-columns: 136px 118px 190px;
   grid-template-areas:
     "export import status"
     "detail detail detail"
@@ -118,7 +118,7 @@ h2 {
   justify-items: end;
   align-items: start;
   align-content: start;
-  width: 620px;
+  width: 720px;
   min-height: 116px;
   gap: 8px 10px;
   overflow: visible;
@@ -1154,9 +1154,9 @@ tr:last-child td {
         <h1 class="app-title">Client Asset Database</h1>
       </div>
       <div class="header-actions">
-        <button id="exportBtn" class="admin-export-control" type="button" title="Export client asset database Excel workbook">Export</button>
-        <label class="file-btn admin-export-control" title="Import client asset database Excel workbook">
-          Import
+        <button id="exportBtn" class="admin-export-control" type="button" title="Download client asset database Excel workbook">Download Excel</button>
+        <label class="file-btn admin-export-control" title="Upload client asset database Excel workbook">
+          Upload Excel
           <input id="importInput" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
         </label>
         <span id="syncStatus" class="sync-status" aria-live="polite">Netlify loading</span>
@@ -1847,8 +1847,7 @@ tr:last-child td {
       </section>
     </main>
 
-    <script src="xlsx.full.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';"></script>
-    <script src="app.js"></script>
+    <script defer src="app.js"></script>
   </body>
 </html>
 
