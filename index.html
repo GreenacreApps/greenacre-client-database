@@ -113,7 +113,6 @@ h2 {
   grid-template-columns: 136px 118px 190px;
   grid-template-areas:
     "export import status"
-    "detail detail detail"
     "user user user";
   justify-items: end;
   align-items: start;
@@ -133,17 +132,24 @@ h2 {
 }
 
 .app-header > .header-actions #syncStatus {
-  grid-area: status;
-  width: 190px;
-  padding-top: 8px;
   text-align: left;
 }
 
 .app-header > .header-actions #syncStatusDetails {
-  grid-area: detail;
   width: 100%;
-  min-height: 30px;
-  text-align: right;
+  min-height: 28px;
+  text-align: left;
+}
+
+.sync-status-stack {
+  grid-area: status;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 190px;
+  min-height: 58px;
+  padding-top: 8px;
+  gap: 4px;
 }
 
 .app-header > .header-actions #userControls {
@@ -898,7 +904,26 @@ tr:last-child td {
   .app-header > .header-actions {
     width: 100%;
     min-width: 0;
-    grid-template-columns: auto auto minmax(150px, 1fr);
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "export import"
+      "status status"
+      "user user";
+    justify-items: center;
+    min-height: 0;
+  }
+
+  .sync-status-stack {
+    width: 100%;
+    min-height: 52px;
+    padding-top: 0;
+    align-items: center;
+  }
+
+  .app-header > .header-actions #syncStatus,
+  .app-header > .header-actions #syncStatusDetails {
+    width: 100%;
+    text-align: center;
   }
 
   .brand-logo {
@@ -1159,8 +1184,10 @@ tr:last-child td {
           Upload Excel
           <input id="importInput" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
         </label>
-        <span id="syncStatus" class="sync-status" aria-live="polite">Netlify loading</span>
-        <span id="syncStatusDetails" class="sync-status-detail" aria-live="polite"></span>
+        <div class="sync-status-stack">
+          <span id="syncStatus" class="sync-status" aria-live="polite">Netlify loading</span>
+          <span id="syncStatusDetails" class="sync-status-detail" aria-live="polite"></span>
+        </div>
       </div>
       <nav class="tabs" aria-label="Client database sections">
         <button class="active" data-tab="clients" type="button">Clients</button>
