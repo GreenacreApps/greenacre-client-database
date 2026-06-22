@@ -914,6 +914,8 @@ async function imageDimensionsFromFile(file) {
         return {
           width: rotated ? rawHeight : rawWidth,
           height: rotated ? rawWidth : rawHeight,
+          rawWidth,
+          rawHeight,
           orientation
         };
       }
@@ -925,7 +927,14 @@ async function imageDimensionsFromFile(file) {
     const url = URL.createObjectURL(file);
     image.onload = () => {
       URL.revokeObjectURL(url);
-      resolve({ image, width: image.naturalWidth, height: image.naturalHeight });
+      resolve({
+        image,
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        rawWidth: image.naturalWidth,
+        rawHeight: image.naturalHeight,
+        orientation: 1
+      });
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
@@ -942,6 +951,37 @@ function canvasToJpeg(canvas, quality) {
       else reject(new Error("The photo could not be compressed on this device."));
     }, "image/jpeg", quality);
   });
+}
+
+function drawOrientedImage(context, image, orientation, rawWidth, rawHeight, canvasWidth, canvasHeight) {
+  context.save();
+  switch (orientation) {
+    case 2:
+      context.transform(-1, 0, 0, 1, canvasWidth, 0);
+      break;
+    case 3:
+      context.transform(-1, 0, 0, -1, canvasWidth, canvasHeight);
+      break;
+    case 4:
+      context.transform(1, 0, 0, -1, 0, canvasHeight);
+      break;
+    case 5:
+      context.transform(0, 1, 1, 0, 0, 0);
+      break;
+    case 6:
+      context.transform(0, 1, -1, 0, canvasWidth, 0);
+      break;
+    case 7:
+      context.transform(0, -1, -1, 0, canvasWidth, canvasHeight);
+      break;
+    case 8:
+      context.transform(0, -1, 1, 0, 0, canvasHeight);
+      break;
+    default:
+      break;
+  }
+  context.drawImage(image, 0, 0, rawWidth, rawHeight);
+  context.restore();
 }
 
 async function prepareAssetAttachment(file, onProgress = () => {}) {
@@ -962,15 +1002,19 @@ async function prepareAssetAttachment(file, onProgress = () => {}) {
   const scale = Math.min(1, ATTACHMENT_IMAGE_MAX_EDGE / Math.max(source.width, source.height));
   let width = Math.max(1, Math.round(source.width * scale));
   let height = Math.max(1, Math.round(source.height * scale));
+  const rawWidth = Math.max(1, Math.round((source.rawWidth || source.width) * scale));
+  const rawHeight = Math.max(1, Math.round((source.rawHeight || source.height) * scale));
   let drawable = source.image;
+  let applyOrientation = false;
   if (typeof createImageBitmap === "function") {
     try {
       drawable = await createImageBitmap(file, {
-        resizeWidth: width,
-        resizeHeight: height,
+        resizeWidth: rawWidth,
+        resizeHeight: rawHeight,
         resizeQuality: "high",
-        imageOrientation: "from-image"
+        imageOrientation: "none"
       });
+      applyOrientation = true;
     } catch {
       drawable = source.image || await createImageBitmap(file);
     }
@@ -999,7 +1043,11 @@ async function prepareAssetAttachment(file, onProgress = () => {}) {
   if (!context) throw new Error("Photo compression is not supported by this browser.");
   context.fillStyle = "#fff";
   context.fillRect(0, 0, width, height);
-  context.drawImage(drawable, 0, 0, width, height);
+  if (applyOrientation) {
+    drawOrientedImage(context, drawable, source.orientation || 1, rawWidth, rawHeight, width, height);
+  } else {
+    context.drawImage(drawable, 0, 0, width, height);
+  }
   drawable.close?.();
 
   let compressed = await canvasToJpeg(canvas, 0.82);
