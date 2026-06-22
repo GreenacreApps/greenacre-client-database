@@ -861,11 +861,37 @@ function attachmentSizeLabel(bytes = 0) {
   return `${(Number(bytes || 0) / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function jpegExifOrientation(bytes, payloadOffset, payloadLength) {
+  if (payloadLength < 14) return 1;
+  if (String.fromCharCode(...bytes.slice(payloadOffset, payloadOffset + 4)) !== "Exif") return 1;
+  const tiff = payloadOffset + 6;
+  const littleEndian = bytes[tiff] === 0x49 && bytes[tiff + 1] === 0x49;
+  const bigEndian = bytes[tiff] === 0x4d && bytes[tiff + 1] === 0x4d;
+  if (!littleEndian && !bigEndian) return 1;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const get16 = (offset) => view.getUint16(offset, littleEndian);
+  const get32 = (offset) => view.getUint32(offset, littleEndian);
+  try {
+    const firstIfd = tiff + get32(tiff + 4);
+    const entries = get16(firstIfd);
+    for (let index = 0; index < entries; index += 1) {
+      const entry = firstIfd + 2 + (index * 12);
+      if (get16(entry) === 0x0112) return get16(entry + 8) || 1;
+    }
+  } catch {
+    return 1;
+  }
+  return 1;
+}
+
 async function imageDimensionsFromFile(file) {
   if (file.type === "image/jpeg") {
     const bytes = new Uint8Array(await file.slice(0, Math.min(file.size, 1024 * 1024)).arrayBuffer());
     if (bytes[0] === 0xff && bytes[1] === 0xd8) {
       let offset = 2;
+      let orientation = 1;
+      let rawWidth = 0;
+      let rawHeight = 0;
       while (offset + 9 < bytes.length) {
         if (bytes[offset] !== 0xff) {
           offset += 1;
@@ -873,14 +899,23 @@ async function imageDimensionsFromFile(file) {
         }
         const marker = bytes[offset + 1];
         const length = (bytes[offset + 2] << 8) + bytes[offset + 3];
+        if (marker === 0xe1 && length > 8) {
+          orientation = jpegExifOrientation(bytes, offset + 4, length - 2);
+        }
         if ([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf].includes(marker)) {
-          return {
-            width: (bytes[offset + 7] << 8) + bytes[offset + 8],
-            height: (bytes[offset + 5] << 8) + bytes[offset + 6]
-          };
+          rawWidth = (bytes[offset + 7] << 8) + bytes[offset + 8];
+          rawHeight = (bytes[offset + 5] << 8) + bytes[offset + 6];
         }
         if (!length || length < 2) break;
         offset += length + 2;
+      }
+      if (rawWidth && rawHeight) {
+        const rotated = orientation >= 5 && orientation <= 8;
+        return {
+          width: rotated ? rawHeight : rawWidth,
+          height: rotated ? rawWidth : rawHeight,
+          orientation
+        };
       }
     }
   }
