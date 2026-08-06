@@ -259,11 +259,17 @@ async function login(req: Request): Promise<Response> {
   let user = users.find((item) => item.usernameKey === usernameKey) || null;
 
   if (!users.length) {
-    const adminUsername = env("GREENACRE_ADMIN_USERNAME") || "admin";
-    const adminPassword = env("GREENACRE_ADMIN_PASSWORD") || "GreenacreAdmin123!";
+    const adminUsername = env("GREENACRE_ADMIN_USERNAME");
+    const adminPassword = env("GREENACRE_ADMIN_PASSWORD");
+
+    if (!adminUsername || !adminPassword) {
+      return text("Administrator credentials are not configured", 503);
+    }
+
     if (username !== adminUsername || password !== adminPassword) {
       return text("First login must use the configured admin username and password", 401);
     }
+
     user = await createUser(username, password, "admin");
     users = [user];
     await writeUsers(users);
