@@ -194,7 +194,7 @@ function showLoginScreen(message = "") {
   document.body.innerHTML = `
     <main class="auth-screen">
       <form id="loginForm" class="auth-card">
-        <img src="Picture1.png" alt="Greenacre Environmental Systems Ltd">
+        <img src="Picture2.png" alt="Greenacre Environmental Systems Ltd">
         <h1>Greenacre Client Database</h1>
         <label>Username <input id="loginUsername" autocomplete="username" required></label>
         <label>Password <input id="loginPassword" type="password" autocomplete="current-password" required></label>
