@@ -92,8 +92,15 @@ function todayIso(): string {
   return isoDate(new Date());
 }
 
-function targetDueDateIso(today = todayIso()): string {
-  return daysAfterIso(today, 42);
+function reminderWindow(today = todayIso()): { start: string; end: string } {
+  return {
+    start: daysAfterIso(today, 42),
+    end: daysAfterIso(today, 48)
+  };
+}
+
+function dateInWindow(value: string, window: { start: string; end: string }): boolean {
+  return value >= window.start && value <= window.end;
 }
 
 function sendKey(candidate: ReminderCandidate): string {
@@ -123,7 +130,7 @@ function fieldValue(data: Record<string, unknown> = {}, ids: string[]): string {
   return "";
 }
 
-function collectReminderCandidates(data: any, targetDueDate: string): ReminderCandidate[] {
+function collectReminderCandidates(data: any, window: { start: string; end: string }): ReminderCandidate[] {
   const fields = Array.isArray(data?.assetCustomFields) ? data.assetCustomFields : [];
   const projectIds = projectNumberFieldIds(fields);
   const candidates: ReminderCandidate[] = [];
@@ -133,7 +140,8 @@ function collectReminderCandidates(data: any, targetDueDate: string): ReminderCa
         const customFields = [...fields, ...(Array.isArray(asset?.localCustomFields) ? asset.localCustomFields : [])];
         const dueDateValue = fieldValue(asset?.customData || {}, dueFieldIds(customFields));
         const dueDate = parseDate(dueDateValue);
-        if (!dueDate || isoDate(dueDate) !== targetDueDate) continue;
+        const dueDateIso = dueDate ? isoDate(dueDate) : "";
+        if (!dueDateIso || !dateInWindow(dueDateIso, window)) continue;
         const projectNumbers = fieldValue(asset?.customData || {}, projectNumberFieldIds(customFields)) || fieldValue(asset?.customData || {}, projectIds);
         candidates.push({
           clientName: String(client?.name || ""),
@@ -143,7 +151,7 @@ function collectReminderCandidates(data: any, targetDueDate: string): ReminderCa
           assetReference: String(asset?.reference || ""),
           assetName: String(asset?.name || ""),
           projectNumbers,
-          dueDate: targetDueDate
+          dueDate: dueDateIso
         });
       }
     }
@@ -225,12 +233,12 @@ async function markSent(candidate: ReminderCandidate): Promise<void> {
 }
 
 export default async () => {
-  const targetDueDate = targetDueDateIso();
+  const window = reminderWindow();
   const data = await store().get(DATA_KEY, { type: "json" }) || { state: { clients: [] }, assetCustomFields: [] };
-  const candidates = collectReminderCandidates(data, targetDueDate);
+  const candidates = collectReminderCandidates(data, window);
   const result = {
     ok: true,
-    targetDueDate,
+    reminderWindow: window,
     matched: candidates.length,
     sent: 0,
     skippedAlreadySent: 0,
