@@ -136,6 +136,13 @@ function sixWeeksBeforeIso(value = ""): string {
   return date.toISOString().slice(0, 10);
 }
 
+function daysAfterIso(value = "", days = 0): string {
+  const date = new Date(`${value}T09:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 function randomId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
 }
@@ -449,8 +456,10 @@ async function sendReminderPayload(body: Record<string, unknown>): Promise<Respo
     `Site: ${body.siteReference || ""} ${body.siteName || ""}`,
     `Asset: ${body.assetReference || ""} ${body.assetName || ""}`,
     `Previous job/project numbers: ${body.projectNumbers || ""}`,
+    `Reminder sent date: ${reminderDate}`,
     `Due date: ${dueDate}`
   ].join("\\n");
+  const inviteEndDate = daysAfterIso(dueDate, 1);
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -459,8 +468,8 @@ async function sendReminderPayload(body: Record<string, unknown>): Promise<Respo
     "BEGIN:VEVENT",
     `UID:${crypto.randomUUID()}@greenecs.co.uk`,
     `DTSTAMP:${compactDate(new Date().toISOString().slice(0, 10))}T090000Z`,
-    `DTSTART;VALUE=DATE:${compactDate(reminderDate)}`,
-    `DTEND;VALUE=DATE:${compactDate(reminderDate)}`,
+    `DTSTART;VALUE=DATE:${compactDate(dueDate)}`,
+    `DTEND;VALUE=DATE:${compactDate(inviteEndDate)}`,
     `SUMMARY:${escapeIcs(summary)}`,
     `DESCRIPTION:${escapeIcs(description)}`,
     "END:VEVENT",
@@ -473,8 +482,8 @@ async function sendReminderPayload(body: Record<string, unknown>): Promise<Respo
     <strong>Site:</strong> ${htmlEscape([body.siteReference, body.siteName].filter(Boolean).join(" - "))}<br>
     <strong>Asset:</strong> ${htmlEscape([body.assetReference, body.assetName].filter(Boolean).join(" - "))}<br>
     <strong>Previous job/project numbers:</strong> ${htmlEscape(String(body.projectNumbers || ""))}<br>
-    <strong>Due date:</strong> ${htmlEscape(dueDate)}<br>
-    <strong>Calendar reminder date:</strong> ${htmlEscape(reminderDate)}</p>
+    <strong>Reminder sent date:</strong> ${htmlEscape(reminderDate)}<br>
+    <strong>Calendar invite date:</strong> ${htmlEscape(dueDate)}</p>
   `;
 
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -498,7 +507,7 @@ async function sendReminderPayload(body: Record<string, unknown>): Promise<Respo
     const detail = await response.text().catch(() => response.statusText);
     return text(`Brevo email failed: ${detail || response.statusText}`, 502);
   }
-  return json({ ok: true, configured: true, reminderDate });
+  return json({ ok: true, configured: true, reminderDate, dueDate, calendarInviteDate: dueDate });
 }
 
 async function postReminderEmail(req: Request): Promise<Response> {
@@ -512,7 +521,7 @@ async function postReminderEmailTest(req: Request): Promise<Response> {
   const user = await requireAdmin(req);
   if (user instanceof Response) return user;
   const due = new Date();
-  due.setMonth(due.getMonth() + 1);
+  due.setDate(due.getDate() + 42);
   return sendReminderPayload({
     clientName: "Greenacre Brevo Test",
     siteReference: "TEST-SITE",

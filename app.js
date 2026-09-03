@@ -332,7 +332,7 @@ async function sendAdminTestEmail() {
     const data = await apiFetch(SERVER_STORAGE.reminderEmailTestUrl, { method: "POST", body: JSON.stringify({}) });
     if (message) {
       message.textContent = data.configured
-        ? `Test email sent. Calendar reminder date: ${data.reminderDate || ""}`
+        ? `Test email sent. Calendar invite date: ${data.calendarInviteDate || data.dueDate || ""}. Reminder sent date: ${data.reminderDate || ""}`
         : "Brevo is not configured. Add BREVO_API_KEY in Netlify environment variables.";
     }
   } catch (error) {
