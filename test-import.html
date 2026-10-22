@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Test database snapshot import</title><style>body{max-width:750px;margin:50px auto;font:17px system-ui;padding:24px}button,input{font:inherit;margin:12px 0;padding:12px}pre{white-space:pre-wrap}aside{background:#fff0d0;padding:16px}</style><h1>Test database snapshot import</h1><aside>Only this isolated test database can be populated. Requires its administrator session and an empty database. Live records are never modified.</aside><p>Select the authorised database JSON snapshot.</p><input id="snapshot" aria-label="Database snapshot JSON" type="file" accept=".json,application/json"><br><button id="restore">Import snapshot into empty test database</button><pre role="status" id="status"></pre><p><a href="/">Open test database</a></p><script>
+const allowed='greenacre-assets-test-20261022.netlify.app';
+document.getElementById('restore').onclick=async()=>{
+const status=document.getElementById('status'),button=document.getElementById('restore');
+try{if(location.hostname!==allowed)throw Error('This utility is restricted to the isolated test hostname');
+const file=document.getElementById('snapshot').files[0];if(!file)throw Error('Select a JSON snapshot first');
+const body=await file.text();JSON.parse(body);button.disabled=true;status.textContent='Importing...';
+const r=await fetch('/api/test-restore',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body});
+const text=await r.text();if(!r.ok)throw Error(text);status.textContent='Imported successfully\n'+JSON.stringify(JSON.parse(text),null,2);
+}catch(e){status.textContent='Import failed: '+e.message}finally{button.disabled=false}};
+</script></html>
