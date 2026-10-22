@@ -156,7 +156,7 @@ function adminDeleteButton(attributes, label = "Remove") {
 
 function requireAdminRemoval() {
   if (isAdminUser()) return true;
-  alert("Only admin users can remove clients, sites, assets, contacts or asset data cells.");
+  alert("Only admin users can remove clients, sites, assets or asset data cells.");
   return false;
 }
 
@@ -418,42 +418,24 @@ function clientDatabaseSnapshot() {
 
 function isProjectNumberField(field) {
   const key = cleanHeader(field?.label || field?.id || "");
-  return ["recentprojectnumbers", "recentprojectnumbersasset", "projectnumbers", "jobnumbers"].includes(key);
+  return ["recentprojectnumbers", "recentprojectnumbersasset", "projectnumbers", "jobnumbers", "jobnumbersprojectnumbers"].includes(key);
 }
 
 function isDueDateField(field) {
   return cleanHeader(field?.label || field?.id || "") === "duedate";
 }
 
-function consolidateProjectNumberFields() {
-  const fields = assetCustomFields || [];
-  const projectFields = fields.filter(isProjectNumberField);
-  if (!projectFields.length) return;
-  const keeper = projectFields.find((field) => cleanHeader(field.label) === "projectnumbers") || projectFields[0];
-  keeper.label = "Project Numbers";
-  keeper.type = "text";
-  keeper.id ||= "custom_project_numbers";
-  for (const client of state.clients || []) {
-    for (const site of client.sites || []) {
-      for (const asset of site.assets || []) {
-        asset.customData ||= {};
-        const values = projectFields
-          .map((field) => asset.customData?.[field.id])
-          .filter((value) => value !== undefined && value !== null && String(value).trim() !== "")
-          .map((value) => String(value).trim());
-        if (values.length) {
-          asset.customData[keeper.id] = Array.from(new Set(values.join(", ").split(",").map((value) => value.trim()).filter(Boolean))).join(", ");
-        }
-        projectFields.forEach((field) => {
-          if (field.id !== keeper.id) delete asset.customData[field.id];
-        });
-      }
-    }
-  }
-  assetCustomFields = [
-    ...fields.filter((field) => !isProjectNumberField(field)),
-    keeper
-  ];
+// Preserve the original stored fields. Consolidation is a presentation only operation.
+function consolidateProjectNumberFields() {}
+
+function isContactField(field) {
+  return /contact|email|phone|telephone/.test(cleanHeader(field?.label || field?.id || ""));
+}
+
+function visibleAssetFields(fields) {
+  const primary = fields.find(f => f.id === "custom_job_numbers") || fields.find(isProjectNumberField);
+  return fields.filter(f => !isContactField(f) && (!isProjectNumberField(f) || f === primary))
+    .map(f => isProjectNumberField(f) ? {...f, label: "Project Numbers"} : f);
 }
 
 function cleanHeader(value) {
@@ -543,13 +525,6 @@ async function exportClientDatabaseExcel() {
     "Client Name": client.name || "",
     "Billing Address": client.address || ""
   }));
-  const contactRows = clients.flatMap((client) => (client.contacts || []).map((contact) => ({
-    "Client Name": client.name || "",
-    "Contact Name": contact.name || "",
-    "Role": contact.role || "",
-    "Email": contact.email || "",
-    "Phone": contact.phone || ""
-  })));
   const siteRows = clients.flatMap((client) => (client.sites || []).map((site) => ({
     "Client Name": client.name || "",
     "Site Reference": site.reference || "",
@@ -582,12 +557,12 @@ async function exportClientDatabaseExcel() {
       "Biofilter Media Type": normalized.bioMediaType || "",
       "Biofilter Media Volume m3": normalized.bioMediaVolume || 0
     };
-    (assetCustomFields || []).forEach((field) => {
-      row[`Extra: ${field.label}`] = normalized.customData?.[field.id] ?? "";
+    visibleAssetFields(assetCustomFields || []).forEach((field) => {
+      row[`Extra: ${field.label}`] = isProjectNumberField(field) ? projectNumbersForAsset(normalized) : normalized.customData?.[field.id] ?? "";
     });
     return row;
   })));
-  const fieldRows = (assetCustomFields || []).map((field) => ({
+  const fieldRows = visibleAssetFields(assetCustomFields || []).map((field) => ({
     "Data Cell ID": field.id,
     "Data Cell Name": field.label,
     "Data Type": field.type || "text"
@@ -602,7 +577,6 @@ async function exportClientDatabaseExcel() {
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(assetRows.length ? assetRows : [{ "Client Name": "", "Site Reference": "", "Site Name": "", "Asset Reference": "", "Asset Name": "", "Asset Location": "" }]), "Assets");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(siteRows.length ? siteRows : [{ "Client Name": "", "Site Reference": "", "Site Name": "", "Site Address": "" }]), "Sites");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(clientRows.length ? clientRows : [{ "Client Name": "", "Billing Address": "" }]), "Clients");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(contactRows.length ? contactRows : [{ "Client Name": "", "Contact Name": "", "Role": "", "Email": "", "Phone": "" }]), "Contacts");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(fieldRows.length ? fieldRows : [{ "Data Cell ID": "", "Data Cell Name": "", "Data Type": "text" }]), "Asset Data Cells");
   const fileName = `greenacre-client-database-${todayIso()}.xlsx`;
   XLSX.writeFile(workbook, fileName, { compression: false });
@@ -617,7 +591,7 @@ async function importClientDatabaseExcel(file) {
     return sheetName ? XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" }) : [];
   };
   const clientsRows = sheetRows("Clients");
-  const contactsRows = sheetRows("Contacts");
+
   const sitesRows = sheetRows("Sites");
   let assetsRows = sheetRows("Assets");
   if (!assetsRows.length && workbook.SheetNames.length) {
@@ -627,7 +601,7 @@ async function importClientDatabaseExcel(file) {
 
   fieldRows.forEach((row) => {
     const label = rowValue(row, ["Data Cell Name", "Field Name", "Name"]);
-    if (!label) return;
+    if (!label || isContactField({label})) return;
     const id = rowValue(row, ["Data Cell ID", "Field ID", "ID"]) || fieldId(label);
     const type = ["number", "date"].includes(rowValue(row, ["Data Type", "Type"]).toLowerCase()) ? rowValue(row, ["Data Type", "Type"]).toLowerCase() : "text";
     if (!(assetCustomFields || []).some((field) => field.id === id || cleanHeader(field.label) === cleanHeader(label))) {
@@ -637,17 +611,6 @@ async function importClientDatabaseExcel(file) {
 
   clientsRows.forEach((row) => {
     findOrCreateClientByName(rowValue(row, ["Client Name", "Client", "Company"]), rowValue(row, ["Billing Address", "Client Address", "Address"]));
-  });
-  contactsRows.forEach((row) => {
-    const client = findOrCreateClientByName(rowValue(row, ["Client Name", "Client", "Company"]));
-    const name = rowValue(row, ["Contact Name", "Name"]);
-    if (!name) return;
-    const existing = (client.contacts || []).find((contact) => String(contact.name || "").trim().toLowerCase() === name.toLowerCase());
-    const contact = existing || { id: newId("contact"), name, role: "", email: "", phone: "" };
-    contact.role = rowValue(row, ["Role", "Contact Role"]) || contact.role || "";
-    contact.email = rowValue(row, ["Email", "Contact Email"]) || contact.email || "";
-    contact.phone = rowValue(row, ["Phone", "Telephone", "Contact Phone"]) || contact.phone || "";
-    if (!existing) client.contacts.push(contact);
   });
   sitesRows.forEach((row) => {
     const client = findOrCreateClientByName(rowValue(row, ["Client Name", "Client", "Company"]));
@@ -741,7 +704,7 @@ function renderCustomAssetFields(asset = {}) {
   const normalizedAsset = normalizeAsset(asset, 1);
   const standardFields = assetCustomFields || [];
   const localFields = normalizedAsset.localCustomFields || [];
-  const fields = [...standardFields, ...localFields];
+  const fields = visibleAssetFields([...standardFields, ...localFields]);
   target.innerHTML = `
     <div class="panel-head additional-data-head">
       <h3>Additional Asset Data</h3>
@@ -765,7 +728,7 @@ function renderCustomAssetFields(asset = {}) {
         ${fields.map((field) => `
           <label class="custom-field-item">${escapeHtml(field.label)}
             <span class="custom-field-control">
-              <input data-custom-asset-field="${escapeHtml(field.id)}" type="${field.type === "date" ? "date" : "text"}" value="${escapeHtml(normalizedAsset.customData?.[field.id] ?? "")}">
+              <input data-custom-asset-field="${escapeHtml(field.id)}" type="${field.type === "date" ? "date" : "text"}" value="${escapeHtml(isProjectNumberField(field) ? projectNumbersForAsset(normalizedAsset) : normalizedAsset.customData?.[field.id] ?? "")}">
               ${isDueDateField(field) ? `<button data-create-reminder="${escapeHtml(field.id)}" type="button">Reminder</button>` : ""}
               ${isAdminUser() && field.local ? adminDeleteButton(`data-delete-local-asset-field="${escapeHtml(field.id)}"`, "Delete") : ""}
               ${isAdminUser() && !field.local ? adminDeleteButton(`data-clear-custom-asset-field="${escapeHtml(field.id)}"`, "Clear Value") : ""}
@@ -788,6 +751,7 @@ function updateCustomAssetField(target) {
   if (!asset) return;
   asset.customData ||= {};
   asset.customData[target.dataset.customAssetField] = target.value;
+  if (isProjectNumberField((assetCustomFields || []).find(f => f.id === target.dataset.customAssetField))) asset.projectNumbersUnified = true;
   autoPopulateDueDateForAsset(asset);
 }
 
@@ -797,6 +761,7 @@ function clearCustomAssetFieldValue(fieldIdToClear) {
   const asset = site?.assets?.find((item) => item.id === activeClientAssetId);
   if (!asset?.customData) return;
   delete asset.customData[fieldIdToClear];
+  if (isProjectNumberField((assetCustomFields || []).find(f => f.id === fieldIdToClear))) asset.projectNumbersUnified = true;
   renderCustomAssetFields(asset);
   saveState();
 }
@@ -1138,8 +1103,10 @@ function escapeIcs(value) {
 }
 
 function projectNumbersForAsset(asset) {
-  const field = (assetCustomFields || []).find(isProjectNumberField);
-  return field ? String(asset.customData?.[field.id] || "").trim() : "";
+  const fields = (assetCustomFields || []).filter(isProjectNumberField);
+  const primary = fields.find(f => f.id === "custom_job_numbers") || fields[0];
+  if (asset.projectNumbersUnified) return String(asset.customData?.[primary?.id] || "");
+  return [...new Set(fields.map(f => String(asset.customData?.[f.id] || "").trim()).filter(Boolean))].join(", ");
 }
 
 function createDueDateReminder(fieldId) {
@@ -1203,6 +1170,10 @@ async function createAssetCustomField() {
   const label = $("#newAssetFieldLabel")?.value.trim();
   const type = $("#newAssetFieldType")?.value || "text";
   const message = $("#assetFieldAdminMessage");
+  if (isContactField({label})) {
+    if (message) message.textContent = "Personal details are not collected in this database.";
+    return;
+  }
   if (!label) {
     if (message) message.textContent = "Enter a data cell name.";
     return;
@@ -3004,6 +2975,7 @@ function renderAssetQuoteHistory() {
 }
 
 function renderClients() {
+  renderDatabaseOverview();
   renderClientRegister();
   const panelByLevel = {
     "client-details": "#clientDetailsPanel",
@@ -3020,6 +2992,7 @@ function renderClients() {
   ["#clientDetailsPanel", "#clientSitesPanel", "#clientAssetRegisterPanel", "#clientAssetDetailPanel"].forEach((selector) => {
     setBlock(selector, panelByLevel[clientDrillLevel] === selector);
   });
+  renderDatabaseBreadcrumbs();
   if (clientDrillLevel === "register") return;
 
   const client = clientDraft || blankClientDraft();
@@ -3058,7 +3031,7 @@ function renderClients() {
   $("#assetCarbonTempProbeSerial").value = asset.carbonTempProbeSerial || "";
   $("#assetBioMediaType").value = asset.bioMediaType || "";
   $("#assetBioMediaVolume").value = asset.bioMediaVolume || 0;
-  renderClientContacts();
+  // Historical contact data is retained but never rendered.
   renderClientSites();
   renderClientAssets();
   renderAssetRegister();
@@ -3070,7 +3043,7 @@ function renderClients() {
 function clientSearchText(client, key) {
   if (key === "site") return (client.sites || []).map((site) => site.name).join(" ");
   if (key === "asset") return (client.sites || []).flatMap((site) => site.assets || []).map((asset) => asset.name).join(" ");
-  if (key === "contact") return (client.contacts || []).map((contact) => [contact.name, contact.role, contact.email, contact.phone].join(" ")).join(" ");
+  if (key === "contact") return "";
   return "";
 }
 
@@ -3096,7 +3069,7 @@ function renderClientRegister() {
       <tr class="clickable-row" data-row-open-client="${escapeHtml(client.id)}">
         <td><strong>${escapeHtml(client.name || "Unnamed client")}</strong></td>
         <td>${escapeHtml(client.address || "No address")}</td>
-        <td>${escapeHtml((client.contacts || []).length)}</td>
+
         <td>${escapeHtml((client.sites || []).length)}</td>
         <td>${escapeHtml(assetCount)}</td>
         <td>
@@ -3105,7 +3078,7 @@ function renderClientRegister() {
         </td>
       </tr>
     `;
-  }).join("") : `<tr><td colspan="6">No matching clients found.</td></tr>`;
+  }).join("") : `<tr><td colspan="5">No matching clients found.</td></tr>`;
 }
 
 function renderAssetRegister() {
@@ -3229,27 +3202,7 @@ function updateOpenedAssetField(target, shouldRender = false) {
   if (shouldRender) renderAssetRegister();
 }
 
-function renderClientContacts() {
-  const client = clientDraft || findClient(state.activeClientId);
-  const list = $("#clientContactsList");
-  if (!list) return;
-  const query = ($("#clientContactSearch")?.value || "").trim().toLowerCase();
-  const contacts = (client?.contacts || []).filter((contact) => !query || [
-    contact.name,
-    contact.role,
-    contact.email,
-    contact.phone
-  ].join(" ").toLowerCase().includes(query));
-  list.innerHTML = contacts.length ? contacts.map((contact) => `
-    <article class="contact-row">
-      <strong>${escapeHtml(contact.name || "Unnamed contact")}</strong>
-      <span>${escapeHtml(contact.role || "-")}</span>
-      <span>${escapeHtml(contact.email || "-")}</span>
-      <span>${escapeHtml(contact.phone || "-")}</span>
-      ${adminDeleteButton(`data-remove-contact="${escapeHtml(contact.id)}"`)}
-    </article>
-  `).join("") : `<article class="record-card"><p>No matching contacts found.</p></article>`;
-}
+function renderClientContacts() {}
 
 function renderClientSites() {
   const body = $("#clientSitesBody");
@@ -3264,7 +3217,7 @@ function renderClientSites() {
   body.innerHTML = sites.length ? sites.map((site) => `
     <tr class="clickable-row" data-row-open-site="${escapeHtml(site.id)}">
       <td>${escapeHtml(site.reference || "No ref")}</td>
-      <td><strong>${escapeHtml(site.name || "Unnamed site")}</strong></td>
+      <td><div class="site-identity"><span class="site-thumbnail" data-site-thumbnail="${escapeHtml(site.id)}" aria-label="Site photo">Loading photo…</span><span><strong>${escapeHtml(site.name || "Unnamed site")}</strong><small>${escapeHtml(site.address || "")}</small></span></div></td>
       <td>${escapeHtml((site.assets || []).length)}</td>
       <td>
         <button data-select-client-site="${escapeHtml(site.id)}" type="button">Open Site</button>
@@ -3272,6 +3225,7 @@ function renderClientSites() {
       </td>
     </tr>
   `).join("") : `<tr><td colspan="4">No matching sites found.</td></tr>`;
+  observeSiteThumbnails(sites);
 }
 
 function renderClientAssets() {
@@ -3386,7 +3340,7 @@ function renderSupplierSites() {
   const sites = supplierDraft?.sites || [];
   body.innerHTML = sites.length ? sites.map((site) => `
     <tr>
-      <td><strong>${escapeHtml(site.name || "Unnamed site")}</strong></td>
+      <td><div class="site-identity"><span class="site-thumbnail" data-site-thumbnail="${escapeHtml(site.id)}" aria-label="Site photo">Loading photo…</span><span><strong>${escapeHtml(site.name || "Unnamed site")}</strong><small>${escapeHtml(site.address || "")}</small></span></div></td>
       <td>${escapeHtml(site.address || "")}</td>
       <td>${escapeHtml(site.phone || "")}</td>
       <td>${escapeHtml(site.email || "")}</td>
@@ -4274,6 +4228,7 @@ function bindDynamicTableEvents() {
         form.append("file", uploadFile);
         await apiFetch(`/api/assets/${encodeURIComponent(asset.id)}/attachments`, { method: "POST", body: form });
         if ($("#assetAttachmentInput")) $("#assetAttachmentInput").value = "";
+        attachmentListCache.delete(asset.id);
         await renderAssetAttachments(asset);
         const refreshedMessage = $("#assetAttachmentMessage");
         if (refreshedMessage) refreshedMessage.textContent = "Upload complete.";
@@ -4288,6 +4243,7 @@ function bindDynamicTableEvents() {
       const asset = site?.assets?.find((item) => item.id === activeClientAssetId);
       if (!asset) return;
       await apiFetch(`/api/asset-attachments/${encodeURIComponent(asset.id)}/${encodeURIComponent(deleteAttachmentId)}`, { method: "DELETE" });
+      attachmentListCache.delete(asset.id);
       await renderAssetAttachments(asset);
     }
     const reminderFieldId = event.target.dataset.createReminder;
@@ -5233,3 +5189,107 @@ bootstrap();
 
 
 
+
+
+
+// Thumbnails are derived from existing authenticated attachment URLs, never copied into records.
+const attachmentListCache = new Map();
+let thumbnailObserver;
+const thumbnailQueue = [];
+let thumbnailWorkers = 0;
+function attachmentFiles(assetId) {
+  if (!attachmentListCache.has(assetId)) {
+    const request = apiFetch(`/api/assets/${encodeURIComponent(assetId)}/attachments`).then(data => data.files || []);
+    attachmentListCache.set(assetId, request);
+    request.catch(() => attachmentListCache.delete(assetId));
+  }
+  return attachmentListCache.get(assetId);
+}
+function drainThumbnailQueue() {
+  while (thumbnailWorkers < 3 && thumbnailQueue.length) {
+    const task = thumbnailQueue.shift();
+    if (!task.element.isConnected) continue;
+    thumbnailWorkers++;
+    loadSiteThumbnail(task.element, task.site).finally(() => { thumbnailWorkers--; drainThumbnailQueue(); });
+  }
+}
+async function loadSiteThumbnail(element, site) {
+  try {
+    let photo;
+    for (const asset of site.assets || []) {
+      const files = await attachmentFiles(asset.id);
+      photo = files.find(f => String(f.type || "").startsWith("image/") && String(f.url || "").startsWith("/api/asset-attachments/"));
+      if (photo) break;
+    }
+    if (!element.isConnected) return;
+    element.textContent = "No photo";
+    if (photo) {
+      const link = document.createElement("a");
+      link.href = photo.url; link.target = "_blank"; link.rel = "noopener";
+      link.setAttribute("aria-label", `Open photo for ${site.name || "site"}`);
+      const img = document.createElement("img");
+      img.alt = `Photo for ${site.name || "site"}`; img.loading = "lazy"; img.src = photo.url;
+      img.addEventListener("error", () => { element.textContent = "Photo unavailable"; }, {once:true});
+      link.append(img); element.replaceChildren(link);
+    }
+  } catch { if(element.isConnected) element.textContent = "Photo unavailable"; }
+}
+function observeSiteThumbnails(sites) {
+  thumbnailObserver?.disconnect(); thumbnailQueue.length = 0;
+  const byId = new Map(sites.map(site => [site.id, site]));
+  thumbnailObserver = new IntersectionObserver(entries => {
+    for(const entry of entries) if(entry.isIntersecting) {
+      thumbnailObserver.unobserve(entry.target);
+      const site = byId.get(entry.target.dataset.siteThumbnail);
+      if(site) thumbnailQueue.push({element:entry.target, site});
+    }
+    drainThumbnailQueue();
+  }, {rootMargin:"160px"});
+  document.querySelectorAll("[data-site-thumbnail]").forEach(el => thumbnailObserver.observe(el));
+}
+function renderDatabaseOverview() {
+  const target = $("#databaseOverview"); if(!target) return;
+  const sites = (state.clients || []).flatMap(c => c.sites || []);
+  const assets = sites.flatMap(s => s.assets || []);
+  target.innerHTML = [["Clients",state.clients.length],["Sites",sites.length],["Assets",assets.length]].map(([label,count]) => `<article><span>${label}</span><strong>${fmt.format(count)}</strong></article>`).join("");
+}
+function renderDatabaseBreadcrumbs() {
+  const target = $("#databaseBreadcrumbs"); if(!target) return;
+  const client = clientDraft || findClient(state.activeClientId);
+  const site = client?.sites?.find(s => s.id === activeClientSiteId);
+  const asset = site?.assets?.find(a => a.id === activeClientAssetId);
+  const crumbs = [{label:"Clients",level:"register"}];
+  if(clientDrillLevel !== "register" && client) crumbs.push({label:client.name || "New client",level:"client"});
+  if(["site","asset"].includes(clientDrillLevel) && site) crumbs.push({label:site.name || "Site",level:"site"});
+  if(clientDrillLevel === "asset" && asset) crumbs.push({label:asset.name || "Asset",level:"asset"});
+  target.innerHTML = crumbs.map((c,i) => i===crumbs.length-1 ? `<span aria-current="page">${escapeHtml(c.label)}</span>` : `<button type="button" data-database-level="${c.level}">${escapeHtml(c.label)}</button><span aria-hidden="true">/</span>`).join("");
+}
+document.addEventListener("click", event => {
+  const level = event.target.closest("[data-database-level]")?.dataset.databaseLevel;
+  if(!level) return;
+  if(level === "register") showClientRegisterHome();
+  else {updateClientDraftFromForm(); clientDrillLevel = level; if(level === "client") {activeClientSiteId="";activeClientAssetId="";} if(level === "site") activeClientAssetId="";}
+  update();
+});
+document.addEventListener("input", event => {
+  if(event.target.id !== "databaseSearch") return;
+  const query = event.target.value.trim().toLowerCase();
+  const target = $("#databaseSearchResults");
+  if(!query) {target.hidden=true;target.innerHTML="";return;}
+  const matches=[];
+  for(const client of state.clients || []) for(const site of client.sites || []) {
+    const siteMatch = [client.name,site.name,site.reference,site.address].some(v => includesText(v,query));
+    const assets=(site.assets || []).filter(a => siteMatch || [a.name,a.reference,a.location,projectNumbersForAsset(a)].some(v => includesText(v,query)));
+    if(siteMatch || assets.length) matches.push({client,site,assets});
+  }
+  target.hidden=false;
+  target.innerHTML=matches.length ? matches.slice(0,40).map(({client,site,assets}) => `<article class="search-result"><small>${escapeHtml(client.name)}</small><strong>${escapeHtml(site.name)}</strong><span>${assets.length} matching assets</span><button type="button" data-search-client="${escapeHtml(client.id)}" data-search-site="${escapeHtml(site.id)}">Open site</button>${assets.slice(0,5).map(a=>`<button type="button" data-search-client="${escapeHtml(client.id)}" data-search-site="${escapeHtml(site.id)}" data-search-asset="${escapeHtml(a.id)}">${escapeHtml(a.name || a.reference || "Asset")}</button>`).join("")}</article>`).join("") : "<p>No matching sites or assets.</p>";
+});
+document.addEventListener("click", event => {
+  const button=event.target.closest("[data-search-client]"); if(!button) return;
+  if(clientDraft) {updateClientDraftFromForm();saveClientDraft();}
+  state.activeClientId=button.dataset.searchClient;clientDraft=clone(findClient(state.activeClientId));clientEditorOpen=true;
+  activeClientSiteId=button.dataset.searchSite;activeClientAssetId=button.dataset.searchAsset || "";
+  clientDrillLevel=activeClientAssetId ? "asset" : "site";
+  $("#databaseSearchResults").hidden=true;$("#databaseSearch").value="";update();
+});
