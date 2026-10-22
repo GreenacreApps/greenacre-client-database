@@ -1093,3 +1093,114 @@ tr.clickable-row:hover td {background:#f4f8f5}.table-wrap {border-radius:10px}.f
 .asset-photo-preview span {display:block;padding:8px 10px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .asset-photo-preview:hover {box-shadow:0 4px 14px #173f3026}
 @media(max-width:700px){.asset-photo-preview{width:calc(50% - 6px);min-width:120px}.asset-photo-preview img{height:105px}}
+
+/* Touch layouts keep every register readable without horizontal scrolling. */
+.client-database-app main, .client-database-app .panel, .client-database-app .asset-groups,
+.client-database-app .header-actions, .client-database-app .database-intro > div {min-width:0}
+.client-database-app .database-breadcrumbs {overflow-wrap:anywhere}
+.client-database-app .asset-photo-preview {max-width:100%}
+@media(max-width:1100px) {
+  .client-database-app button, .client-database-app .file-btn {min-height:44px}
+  .client-database-app input, .client-database-app select, .client-database-app textarea {font-size:16px;min-height:44px}
+  .client-database-app .database-intro {gap:18px}
+  .client-database-app .database-intro h2 {font-size:27px}
+  .client-database-app .panel-head .header-actions {justify-content:flex-start}
+  .client-database-app .additional-data-admin {grid-template-columns:minmax(0,1fr) minmax(110px,160px)}
+  .client-database-app .custom-field-control {grid-template-columns:minmax(0,1fr);gap:6px}
+  .client-database-app .custom-field-control button {justify-self:start}
+}
+@media(max-width:1024px) {
+  .client-database-app main {width:calc(100% - 32px)}
+  .client-database-app .app-header {grid-template-columns:110px minmax(0,1fr);padding:12px 16px}
+  .client-database-app .app-header > .header-actions {grid-column:1/-1;width:100%;justify-content:space-between}
+  .client-database-app #userControls {flex-basis:auto;margin-left:auto}
+  .client-database-app .panel {padding:18px}
+  .client-database-app .database-overview {flex-shrink:0}
+  .client-database-app .site-identity {min-width:0;gap:10px}
+  .client-database-app .site-identity strong {overflow-wrap:anywhere}
+  .client-database-app .site-thumbnail {width:76px;height:58px}
+  .client-database-app #clientRegisterPanel .table-wrap,
+  .client-database-app #clientSitesPanel .table-wrap,
+  .client-database-app #clientAssetRegisterPanel .table-wrap {border:0;overflow:visible;background:transparent}
+  .client-database-app #clientRegisterPanel table,
+  .client-database-app #clientSitesPanel table,
+  .client-database-app #clientAssetRegisterPanel table {display:block;min-width:0;width:100%}
+  .client-database-app #clientRegisterPanel thead,
+  .client-database-app #clientSitesPanel thead,
+  .client-database-app #clientAssetRegisterPanel thead {display:block}
+  .client-database-app #clientRegisterPanel thead tr:first-child,
+  .client-database-app #clientSitesPanel thead tr:first-child,
+  .client-database-app #clientAssetRegisterPanel thead tr:first-child {display:none}
+  .client-database-app .filter-row {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+  .client-database-app .filter-row th {display:block;position:static;padding:0;background:none;border:0}
+  .client-database-app .filter-row th:empty {display:none}
+  .client-database-app .filter-row input {width:100%;padding:10px}
+  .client-database-app #clientList,
+  .client-database-app #clientSitesBody,
+  .client-database-app #assetRegisterList {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .client-database-app #clientList tr,
+  .client-database-app #clientSitesBody tr,
+  .client-database-app #assetRegisterList tr {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:12px;padding:16px;border:1px solid var(--line);border-radius:12px;background:white;min-width:0}
+  .client-database-app #clientList td,
+  .client-database-app #clientSitesBody td,
+  .client-database-app #assetRegisterList td {display:block;min-width:0;padding:0;border:0;white-space:normal;overflow-wrap:anywhere;font-size:13px}
+  .client-database-app td[data-label]::before {content:attr(data-label);display:block;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .client-database-app #clientList td:first-child,
+  .client-database-app #clientList td:nth-child(2),
+  .client-database-app #clientSitesBody td:nth-child(2),
+  .client-database-app #assetRegisterList td:nth-child(4),
+  .client-database-app #assetRegisterList td:nth-child(5) {grid-column:1/-1}
+  .client-database-app #clientList td:first-child,
+  .client-database-app #clientSitesBody td:nth-child(2),
+  .client-database-app #assetRegisterList td:nth-child(4) {order:-1;font-size:15px}
+  .client-database-app #clientList td:first-child::before,
+  .client-database-app #clientSitesBody td:nth-child(2)::before,
+  .client-database-app #assetRegisterList td:nth-child(4)::before,
+  .client-database-app td[data-label="Actions"]::before {display:none}
+  .client-database-app #clientList td:last-child,
+  .client-database-app #clientSitesBody td:last-child,
+  .client-database-app #assetRegisterList td:last-child {grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding-top:10px;border-top:1px solid var(--line)}
+  .client-database-app #clientAssetRegisterPanel .filter-row th:nth-child(1),
+  .client-database-app #clientAssetRegisterPanel .filter-row th:nth-child(2),
+  .client-database-app #assetRegisterList td:nth-child(1),
+  .client-database-app #assetRegisterList td:nth-child(2) {display:none}
+  .client-database-app #clientList td[colspan],
+  .client-database-app #clientSitesBody td[colspan],
+  .client-database-app #assetRegisterList td[colspan] {grid-column:1/-1}
+  .client-database-app .attachment-row {grid-template-columns:minmax(0,1fr) auto}
+  .client-database-app .attachment-row>span:first-child {grid-column:1/-1;overflow-wrap:anywhere}
+  .client-database-app .attachment-actions {flex-wrap:wrap;width:100%}
+  .client-database-app .attachment-actions input {max-width:100%;width:100%;font-size:13px}
+}
+@media(max-width:600px) {
+  .client-database-app main {width:calc(100% - 24px);margin-top:18px}
+  .client-database-app .app-header {grid-template-columns:90px minmax(0,1fr);gap:10px;padding:10px 12px}
+  .client-database-app .brand-logo {width:90px}
+  .client-database-app .title-block {padding-left:10px}
+  .client-database-app .app-header h1 {font-size:15px}
+  .client-database-app .app-header > .header-actions {gap:8px}
+  .client-database-app #userControls {flex-basis:100%;width:100%;margin-left:0;justify-content:flex-start}
+  .client-database-app .user-pill {flex:1;overflow-wrap:anywhere;font-size:10px}
+  .client-database-app .sync-status-stack {width:auto;align-items:flex-start}
+  .client-database-app .database-intro {display:block;margin-bottom:20px}
+  .client-database-app .database-intro h2 {font-size:25px}
+  .client-database-app .database-overview {margin-top:16px;gap:8px}
+  .client-database-app .database-overview article {min-width:0;flex:1;padding:10px 12px}
+  .client-database-app .database-overview strong {font-size:24px}
+  .client-database-app .panel {padding:14px}
+  .client-database-app .panel-head {gap:12px}
+  .client-database-app .panel-head .header-actions {width:100%;gap:8px}
+  .client-database-app .panel-head .header-actions button {flex:1}
+  .client-database-app #clientList,
+  .client-database-app #clientSitesBody,
+  .client-database-app #assetRegisterList {grid-template-columns:1fr}
+  .client-database-app .asset-groups details>.form-grid,
+  .client-database-app #assetCustomFieldsPanel .custom-field-list,
+  .client-database-app .additional-data-admin {grid-template-columns:1fr}
+  .client-database-app .modal-card {padding:14px;max-height:calc(100dvh - 32px);overflow:auto}
+  .client-database-app .modal-backdrop {padding:12px}
+  .client-database-app .asset-photo-gallery {padding:10px;gap:10px}
+  .client-database-app .asset-photo-preview {width:calc(50% - 5px);min-width:0}
+  .client-database-app .asset-photo-preview img {height:100px}
+  .client-database-app .database-search-results {max-height:55dvh}
+}
