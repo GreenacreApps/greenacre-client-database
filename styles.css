@@ -1162,8 +1162,8 @@ tr.clickable-row:hover td {background:#f4f8f5}.table-wrap {border-radius:10px}.f
   .client-database-app #assetRegisterList td:last-child {grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding-top:10px;border-top:1px solid var(--line)}
   .client-database-app #clientAssetRegisterPanel .filter-row th:nth-child(1),
   .client-database-app #clientAssetRegisterPanel .filter-row th:nth-child(2),
-  .client-database-app #assetRegisterList td:nth-child(1),
-  .client-database-app #assetRegisterList td:nth-child(2) {display:none}
+  .client-database-app #assetRegisterList td[data-label]:nth-child(1),
+  .client-database-app #assetRegisterList td[data-label]:nth-child(2) {display:none}
   .client-database-app #clientList td[colspan],
   .client-database-app #clientSitesBody td[colspan],
   .client-database-app #assetRegisterList td[colspan] {grid-column:1/-1}
@@ -1204,3 +1204,5 @@ tr.clickable-row:hover td {background:#f4f8f5}.table-wrap {border-radius:10px}.f
   .client-database-app .asset-photo-preview img {height:100px}
   .client-database-app .database-search-results {max-height:55dvh}
 }
+
+@media(max-width:1024px){.client-database-app #assetRegisterList .num{text-align:left}.client-database-app #assetRegisterList td[colspan]{display:block!important;grid-column:1/-1}}
