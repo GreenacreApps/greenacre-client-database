@@ -1,5 +1,5 @@
 import type { Config, Context } from "@netlify/functions";
-import { getDeployStore, getStore } from "@netlify/blobs";
+import { getStore } from "@netlify/blobs";
 import * as XLSX from "xlsx";
 
 declare const Netlify: {
@@ -39,7 +39,7 @@ type ImportStats = {
   placeholderAssetsRemoved: number;
 };
 
-const STORE_NAME = "greenacre-client-db";
+const STORE_NAME = "greenacre-assets-test-20261022";
 const DATA_KEY = "data";
 const USERS_KEY = "users";
 const ASSET_FIELDS_KEY = "asset-fields";
@@ -88,8 +88,7 @@ const STANDARD_ASSET_FIELD_ALIASES: Record<string, string[]> = {
 };
 
 function store() {
-  const isProduction = Netlify?.context?.deploy?.context === "production";
-  return isProduction ? getStore(STORE_NAME, { consistency: "strong" }) : getDeployStore({ name: STORE_NAME });
+  return getStore(STORE_NAME, { consistency: "strong" });
 }
 
 function env(name: string): string {
@@ -1057,9 +1056,12 @@ async function importExcel(req: Request): Promise<Response> {
 }
 
 export default async (req: Request, context: Context): Promise<Response> => {
+  if (new URL(req.url).hostname !== "greenacre-assets-test-20261022.netlify.app") {
+    return text("Isolated test API is restricted to its dedicated test hostname", 503);
+  }
   const path = new URL(req.url).pathname.replace(/^\/\.netlify\/functions\/api/, "/api");
 
-  if (req.method === "GET" && path === "/api/health") return json({ ok: true });
+  if (req.method === "GET" && path === "/api/health") return json({ ok: true, environment: "isolated-test", storage: STORE_NAME, emailsEnabled: false });
   if (req.method === "GET" && path === "/api/session") {
     const user = await currentUser(req);
     return user ? json({ user: publicUser(user) }) : text("Not signed in", 401);
@@ -1078,8 +1080,8 @@ export default async (req: Request, context: Context): Promise<Response> => {
   if (req.method === "POST" && path.startsWith("/api/users/") && path.endsWith("/password")) {
     return resetUserPassword(req, path.slice("/api/users/".length, -"/password".length));
   }
-  if (req.method === "POST" && path === "/api/reminder-email/test") return postReminderEmailTest(req);
-  if (req.method === "POST" && path === "/api/reminder-email") return postReminderEmail(req);
+  if (req.method === "POST" && path === "/api/reminder-email/test") return text("Email sending is disabled in the isolated test environment", 403);
+  if (req.method === "POST" && path === "/api/reminder-email") return text("Email sending is disabled in the isolated test environment", 403);
   if (req.method === "POST" && path === "/api/import-excel") return importExcel(req);
   const assetAttachmentMatch = path.match(/^\/api\/assets\/([^/]+)\/attachments$/);
   if (assetAttachmentMatch && req.method === "GET") return listAssetAttachments(req, assetAttachmentMatch[1]);
