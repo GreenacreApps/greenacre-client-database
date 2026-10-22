@@ -872,6 +872,7 @@ function applyImportedAssetFields(row: Record<string, any>, asset: any, fields: 
   for (const [key, aliases] of Object.entries(coreMap)) applyImportedValue(asset, key, excelCell(row, aliases), stats);
   const aliasGroups = importedCustomAliasGroups();
   for (const standard of STANDARD_ASSET_CUSTOM_FIELDS) {
+    if (/contact|email|phone|telephone/i.test(standard.label)) continue;
     const value = excelCell(row, [standard.label, ...(aliasGroups[standard.label] || []), `Extra: ${standard.label}`]);
     applyImportedCustomValue(asset, standard.id, value, stats);
   }
@@ -881,7 +882,7 @@ function applyImportedAssetFields(row: Record<string, any>, asset: any, fields: 
     ...Object.values(coreMap).flat(), ...Object.entries(aliasGroups).flatMap(([label, aliases]) => [label, `Extra: ${label}`, ...aliases])
   ].map(importHeaderKey));
   for (const [header, raw] of Object.entries(row)) {
-    if (!String(raw ?? "").trim() || knownKeys.has(importHeaderKey(header))) continue;
+    if (/contact|email|phone|telephone/i.test(header) || !String(raw ?? "").trim() || knownKeys.has(importHeaderKey(header))) continue;
     const field = findOrCreateField(fields, header);
     applyImportedCustomValue(asset, field.id, String(raw ?? "").trim(), stats);
   }
@@ -1132,3 +1133,4 @@ export default async (req: Request, context: Context): Promise<Response> => {
 export const config: Config = {
   path: "/api/*"
 };
+
