@@ -1206,3 +1206,6 @@ tr.clickable-row:hover td {background:#f4f8f5}.table-wrap {border-radius:10px}.f
 }
 
 @media(max-width:1024px){.client-database-app #assetRegisterList .num{text-align:left}.client-database-app #assetRegisterList td[colspan]{display:block!important;grid-column:1/-1}}
+
+/* Give file links the same touch area as buttons without restricting native zoom. */
+@media(max-width:1100px){.client-database-app .attachment-row-actions a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:10px 12px}.client-database-app .asset-groups label{overflow-wrap:anywhere}}
