@@ -810,14 +810,18 @@ async function renderAssetAttachments(asset = {}) {
     const data = await apiFetch(`/api/assets/${encodeURIComponent(asset.id)}/attachments`);
     if (panel.dataset.assetId !== asset.id) return;
     const files = Array.isArray(data.files) ? data.files : [];
-    const photos = files.filter(file => String(file.type || "").startsWith("image/") && String(file.url || "").startsWith("/api/asset-attachments/"));
+    const photos = files.filter(isPhotoAttachment);
+    const coverPhoto = preferredAssetPhoto(files, asset);
     gallery.hidden = !photos.length;
     gallery.innerHTML = photos.map((file, index) => `
-      <a class="asset-photo-preview" href="${escapeHtml(file.url)}" target="_blank" rel="noopener" aria-label="Open photo ${index + 1} for ${escapeHtml(asset.name || "asset")}">
+      <div class="asset-photo-choice">
+      <a class="asset-photo-preview ${file.id === coverPhoto?.id ? "is-cover-photo" : ""}" href="${escapeHtml(file.url)}" target="_blank" rel="noopener" aria-label="Open photo ${index + 1} for ${escapeHtml(asset.name || "asset")}">
         <img src="${escapeHtml(file.url)}" alt="${escapeHtml(file.name || `Asset photo ${index + 1}`)}" loading="lazy">
         <span>${escapeHtml(file.name || `Photo ${index + 1}`)}</span>
       </a>
-    `).join("");
+      ${photos.length > 1 ? (file.id === coverPhoto?.id ? '<span class="cover-photo-label">Cover photo</span>' : `<button type="button" data-set-cover-photo="${escapeHtml(file.id)}">Set as cover photo</button>`) : ""}
+      </div>
+    `).join("") + (photos.length > 1 && asset.coverPhotoId ? '<button type="button" class="automatic-cover-btn" data-automatic-cover-photo>Use automatic cover</button>' : "");
     const message = $("#assetAttachmentMessage");
     if (message) message.textContent = files.length ? "" : "No photos or PDFs attached.";
     const list = $("#assetAttachmentList");
@@ -5242,7 +5246,7 @@ async function loadSiteThumbnail(element, site) {
     let photo;
     for (const asset of site.assets || []) {
       const files = await attachmentFiles(asset.id);
-      photo = files.find(f => String(f.type || "").startsWith("image/") && String(f.url || "").startsWith("/api/asset-attachments/"));
+      photo = preferredAssetPhoto(files, asset);
       if (photo) break;
     }
     if (!element.isConnected) return;
@@ -5339,3 +5343,43 @@ function labelRegisterCells(body, labels) {
     Array.from(row.cells).forEach((cell, index) => {cell.dataset.label = labels[index];});
   }
 }
+
+
+function isPhotoAttachment(file) {
+  return ["image/jpeg", "image/png", "image/gif", "image/webp"].includes(String(file?.type || "").toLowerCase())
+    && !/\.pdf(?:$|[?#])/i.test(String(file?.name || ""))
+    && !/\.pdf(?:$|[?#])/i.test(String(file?.id || ""))
+    && String(file?.url || "").startsWith("/api/asset-attachments/");
+}
+function preferredAssetPhoto(files, asset = {}) {
+  const photos = (files || []).filter(isPhotoAttachment);
+  return photos.find(photo => photo.id === asset.coverPhotoId) || photos[0];
+}
+document.addEventListener("click", async event => {
+  const button = event.target.closest("[data-set-cover-photo], [data-automatic-cover-photo]");
+  if (!button || button.disabled) return;
+  const site = clientDraft?.sites?.find(site => site.id === activeClientSiteId);
+  const asset = site?.assets?.find(asset => asset.id === activeClientAssetId);
+  if (!asset) return;
+  const message = $("#assetAttachmentMessage");
+  const controls = [...document.querySelectorAll("[data-set-cover-photo], [data-automatic-cover-photo]")];
+  controls.forEach(control => control.disabled = true);
+  const oldId = asset.coverPhotoId;
+  try {
+    const files = await attachmentFiles(asset.id);
+    if (button.hasAttribute("data-automatic-cover-photo")) delete asset.coverPhotoId;
+    else {
+      const chosen = files.find(file => file.id === button.dataset.setCoverPhoto && isPhotoAttachment(file));
+      if (!chosen || files.filter(isPhotoAttachment).length < 2) throw new Error("Choose a photo from an asset with multiple photos.");
+      asset.coverPhotoId = chosen.id;
+    }
+    saveClientDraft();
+    await saveStateToServer();
+    await renderAssetAttachments(asset);
+    if ($("#assetAttachmentMessage")) $("#assetAttachmentMessage").textContent = "Cover photo saved.";
+  } catch (error) {
+    if (oldId === undefined) delete asset.coverPhotoId; else asset.coverPhotoId = oldId;
+    if (message) message.textContent = error.message || "Could not save cover photo.";
+    controls.forEach(control => control.disabled = false);
+  }
+});
