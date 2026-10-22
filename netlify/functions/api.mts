@@ -1055,12 +1055,31 @@ async function importExcel(req: Request): Promise<Response> {
   });
 }
 
+
+async function restoreTestSnapshot(req: Request): Promise<Response> {
+  const user = await requireAdmin(req);
+  if (user instanceof Response) return user;
+  const backup = await req.json().catch(() => null);
+  if (!backup || !Array.isArray(backup.state?.clients) || !Array.isArray(backup.assetCustomFields)) return text("Invalid database snapshot", 400);
+  const existing: any = await store().get(DATA_KEY, { type: "json" }) || { version: 0, state: { clients: [] } };
+  if ((existing.state?.clients || []).length) return text("Restore is permitted only into an empty test database", 409);
+  const next = { version: Number(existing.version || 0) + 1, state: backup.state, assetCustomFields: backup.assetCustomFields,
+    updatedAt: new Date().toISOString(), updatedBy: user.username, copiedFromVersion: backup.version };
+  await store().setJSON(ASSET_FIELDS_KEY, backup.assetCustomFields);
+  await store().setJSON(DATA_KEY, next);
+  return json({ ok: true, clients: next.state.clients.length,
+    sites: next.state.clients.reduce((n: number, c: any) => n + (c.sites || []).length, 0),
+    assets: next.state.clients.reduce((n: number, c: any) => n + (c.sites || []).reduce((m: number, s: any) => m + (s.assets || []).length, 0), 0),
+    sourceVersion: backup.version, version: next.version });
+}
+
 export default async (req: Request, context: Context): Promise<Response> => {
   if (new URL(req.url).hostname !== "greenacre-assets-test-20261022.netlify.app") {
     return text("Isolated test API is restricted to its dedicated test hostname", 503);
   }
   const path = new URL(req.url).pathname.replace(/^\/\.netlify\/functions\/api/, "/api");
 
+  if (req.method === "POST" && path === "/api/test-restore") return restoreTestSnapshot(req);
   if (req.method === "GET" && path === "/api/health") return json({ ok: true, environment: "isolated-test", storage: STORE_NAME, emailsEnabled: false });
   if (req.method === "GET" && path === "/api/session") {
     const user = await currentUser(req);
