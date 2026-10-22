@@ -1176,6 +1176,7 @@ tr:last-child td {
   font-weight: 700;
 }
 </style>
+    <link rel="stylesheet" href="styles.css?v=20261022-enhance1">
   </head>
   <body class="client-database-app">
 <div role="note" style="position:relative;z-index:10000;background:#7c2d12;color:#fff;text-align:center;padding:10px;font:600 14px system-ui">TEST ENVIRONMENT — Copy of live records · Separate storage · Email reminders disabled</div>
@@ -1329,11 +1330,10 @@ tr:last-child td {
           <div class="table-wrap quote-search-wrap">
             <table>
               <thead>
-                <tr><th>Client</th><th>Billing Address</th><th>Contacts</th><th>Sites</th><th>Assets</th><th></th></tr>
+                <tr><th>Client</th><th>Billing Address</th><th>Sites</th><th>Assets</th><th></th></tr>
                 <tr class="filter-row">
                   <th><input id="clientSearchName" placeholder="Client"></th>
                   <th><input id="clientSearchAddress" placeholder="Address"></th>
-                  <th><input id="clientSearchContact" placeholder="Contact"></th>
                   <th><input id="clientSearchSite" placeholder="Site"></th>
                   <th><input id="clientSearchAsset" placeholder="Asset"></th>
                   <th></th>
@@ -1345,7 +1345,10 @@ tr:last-child td {
         </section>
 
         <div id="clientEditor" class="grid two">
-          <section class="panel full-span" id="clientDetailsPanel">
+          <section class="database-intro"><div><p class="eyebrow">GREENACRE ASSET MANAGEMENT</p><h2>Your assets, in view.</h2><p>Find a site, check its equipment and keep the details together.</p></div><div id="databaseOverview" class="database-overview"></div></section>
+        <section class="database-search"><label for="databaseSearch">Find a site or asset</label><input id="databaseSearch" type="search" placeholder="Search client, site, asset or project number…" autocomplete="off"><div id="databaseSearchResults" class="database-search-results" hidden aria-live="polite"></div></section>
+        <nav id="databaseBreadcrumbs" class="database-breadcrumbs" aria-label="Asset database location"></nav>
+        <section class="panel full-span" id="clientDetailsPanel">
             <div class="panel-head">
               <h2>Client Details</h2>
               <div class="header-actions">
@@ -1360,7 +1363,7 @@ tr:last-child td {
                   <label>Billing address <input id="clientAddress"></label>
                 </div>
               </div>
-              <div class="sub-panel client-contact-panel">
+              <div class="sub-panel client-contact-panel" hidden inert>
                 <div class="panel-head">
                   <h3>Contacts</h3>
                   <button id="addContactBtn" type="button">Add Contact</button>
@@ -1437,18 +1440,20 @@ tr:last-child td {
                 <button id="backToAssetsBtn" type="button">Back to Asset Register</button>
               </div>
             </div>
-            <div class="form-grid">
+            <div class="asset-groups"><details open><summary>Asset identity</summary><div class="form-grid">
               <label>Asset reference <input id="clientAssetRef" list="assetReferenceOptions"></label>
               <label>Asset name <input id="clientAssetName"></label>
               <label>Asset location <input id="clientAssetLocation" list="assetLocationOptions"></label>
               <datalist id="assetReferenceOptions"></datalist>
               <datalist id="assetLocationOptions"></datalist>
+</div></details><details open><summary>Fan & flow</summary><div class="form-grid">
               <label>Flow rate m3/h <input id="assetFlowRate" inputmode="decimal" autocomplete="off"></label>
               <label>Fan model <input id="assetFanModel"></label>
               <label>Fan serial number <input id="assetFanSerial"></label>
               <label>Low Flow sensor model <input id="assetFlowSensorModel"></label>
               <label>Low Flow sensor serial number <input id="assetFlowSensorSerial"></label>
               <label>Low Flow set point % <input id="assetFlowSetpoint"></label>
+</div></details><details open><summary>Carbon filter</summary><div class="form-grid">
               <label>Carbon media type <input id="assetCarbonMediaType"></label>
               <label>Carbon media SL number <input id="assetCarbonMediaSl"></label>
               <label>Carbon media volume m3 <input id="assetCarbonMediaVolume" inputmode="decimal" autocomplete="off"></label>
@@ -1457,8 +1462,10 @@ tr:last-child td {
               <label>Carbon PT high-high setpoint <input id="assetCarbonHighHighSetpoint" inputmode="decimal" autocomplete="off"></label>
               <label>Carbon temp probe model <input id="assetCarbonTempProbeModel"></label>
               <label>Carbon temp probe serial <input id="assetCarbonTempProbeSerial"></label>
+</div></details><details open><summary>Biofilter</summary><div class="form-grid">
               <label>Biofilter media type <input id="assetBioMediaType"></label>
               <label>Biofilter media volume m3 <input id="assetBioMediaVolume" type="search" inputmode="decimal" autocomplete="new-password" name="greenacre-biofilter-media-volume" data-lpignore="true" data-form-type="other" spellcheck="false"></label>
+</div></details>
               <div id="assetCustomFieldsPanel" class="sub-panel custom-field-panel full-span"></div>
               <section id="assetAttachmentsPanel" class="asset-attachments full-span"></section>
             </div>
@@ -1888,6 +1895,7 @@ tr:last-child td {
     <script defer src="app.js"></script>
   </body>
 </html>
+
 
 
 
