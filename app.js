@@ -3130,7 +3130,7 @@ function renderAssetRegister() {
       <td>${escapeHtml(site.reference || "")}</td>
       <td>${escapeHtml(site.name || "Unnamed site")}</td>
       <td>${escapeHtml(asset.reference || "No ref")}</td>
-      <td><strong>${escapeHtml(asset.name || "Unnamed asset")}</strong></td>
+      <td><div class="site-identity"><span class="site-thumbnail" data-asset-thumbnail="${escapeHtml(asset.id)}" aria-label="Asset photo">Loading photo…</span><strong>${escapeHtml(asset.name || "Unnamed asset")}</strong></div></td>
       <td>${escapeHtml(asset.location || "")}</td>
       <td class="num">${fmt.format(asset.flowRate || 0)}</td>
       <td>${escapeHtml([asset.fanModel, asset.fanSerial].filter(Boolean).join(" / "))}</td>
@@ -3140,6 +3140,7 @@ function renderAssetRegister() {
       </td>
     </tr>
   `).join("") : `<tr><td colspan="8">No matching assets found for this client.</td></tr>`;
+  observeAssetThumbnails(rows.map(row => row.asset));
 }
 
 function renderAssetSavedDataRow(site, asset) {
@@ -3257,7 +3258,7 @@ function renderClientAssets() {
   body.innerHTML = assets.length ? assets.map((asset) => `
     <tr class="clickable-row" data-row-open-asset-site="${escapeHtml(site?.id || "")}" data-row-open-asset="${escapeHtml(asset.id)}">
       <td>${escapeHtml(asset.reference || "No ref")}</td>
-      <td><strong>${escapeHtml(asset.name || "Unnamed asset")}</strong></td>
+      <td><div class="site-identity"><span class="site-thumbnail" data-asset-thumbnail="${escapeHtml(asset.id)}" aria-label="Asset photo">Loading photo…</span><strong>${escapeHtml(asset.name || "Unnamed asset")}</strong></div></td>
       <td>${escapeHtml(asset.location || "")}</td>
       <td class="num">${fmt.format(asset.flowRate || 0)}</td>
       <td>
@@ -5313,3 +5314,18 @@ document.addEventListener("click", event => {
   clientDrillLevel=activeClientAssetId ? "asset" : "site";
   $("#databaseSearchResults").hidden=true;$("#databaseSearch").value="";update();
 });
+
+let assetThumbnailObserver;
+function observeAssetThumbnails(assets) {
+  assetThumbnailObserver?.disconnect();
+  const byId = new Map(assets.map(asset => [asset.id, asset]));
+  assetThumbnailObserver = new IntersectionObserver(entries => {
+    for (const entry of entries) if (entry.isIntersecting) {
+      assetThumbnailObserver.unobserve(entry.target);
+      const asset = byId.get(entry.target.dataset.assetThumbnail);
+      if (asset) thumbnailQueue.push({element: entry.target, site: {name: asset.name || asset.reference || "asset", assets: [asset]}});
+    }
+    drainThumbnailQueue();
+  }, {rootMargin: "160px"});
+  document.querySelectorAll("#assetRegisterList [data-asset-thumbnail]").forEach(element => assetThumbnailObserver.observe(element));
+}
