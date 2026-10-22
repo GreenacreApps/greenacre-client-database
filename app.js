@@ -780,6 +780,17 @@ function deleteLocalAssetField(fieldIdToDelete) {
 async function renderAssetAttachments(asset = {}) {
   const panel = $("#assetAttachmentsPanel");
   if (!panel) return;
+  panel.dataset.assetId = asset.id || "";
+  let gallery = $("#assetPhotoGallery");
+  if (!gallery) {
+    gallery = document.createElement("section");
+    gallery.id = "assetPhotoGallery";
+    gallery.className = "asset-photo-gallery";
+    gallery.setAttribute("aria-label", "Asset photo previews");
+    document.querySelector("#clientAssetDetailPanel > .panel-head")?.after(gallery);
+  }
+  gallery.innerHTML = "";
+  gallery.hidden = true;
   if (!asset?.id) {
     panel.innerHTML = "";
     return;
@@ -797,7 +808,16 @@ async function renderAssetAttachments(asset = {}) {
   `;
   try {
     const data = await apiFetch(`/api/assets/${encodeURIComponent(asset.id)}/attachments`);
+    if (panel.dataset.assetId !== asset.id) return;
     const files = Array.isArray(data.files) ? data.files : [];
+    const photos = files.filter(file => String(file.type || "").startsWith("image/") && String(file.url || "").startsWith("/api/asset-attachments/"));
+    gallery.hidden = !photos.length;
+    gallery.innerHTML = photos.map((file, index) => `
+      <a class="asset-photo-preview" href="${escapeHtml(file.url)}" target="_blank" rel="noopener" aria-label="Open photo ${index + 1} for ${escapeHtml(asset.name || "asset")}">
+        <img src="${escapeHtml(file.url)}" alt="${escapeHtml(file.name || `Asset photo ${index + 1}`)}" loading="lazy">
+        <span>${escapeHtml(file.name || `Photo ${index + 1}`)}</span>
+      </a>
+    `).join("");
     const message = $("#assetAttachmentMessage");
     if (message) message.textContent = files.length ? "" : "No photos or PDFs attached.";
     const list = $("#assetAttachmentList");
