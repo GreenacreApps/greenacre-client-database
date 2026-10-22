@@ -1073,12 +1073,29 @@ async function restoreTestSnapshot(req: Request): Promise<Response> {
     sourceVersion: backup.version, version: next.version });
 }
 
+
+async function restoreTestAttachment(req: Request): Promise<Response> {
+ const user = await requireAdmin(req); if (user instanceof Response) return user;
+ const form = await req.formData().catch(() => null);
+ const file = form?.get("file");
+ const meta = JSON.parse(String(form?.get("metadata") || "null"));
+ if (!(file instanceof File) || !meta?.assetId || !meta?.id || !ALLOWED_ATTACHMENT_TYPES.has(meta.type) || file.size !== meta.size || file.size > MAX_ATTACHMENT_BYTES) return text("Invalid attachment restore payload",400);
+ const key=attachmentKey(String(meta.assetId),String(meta.id));
+ if(await store().getMetadata(key)) return text("This test attachment already exists",409);
+ const bytes=await file.arrayBuffer();
+ const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes))).map(x=>x.toString(16).padStart(2,"0")).join("");
+ if(meta.sha256 && hash!==meta.sha256)return text("Attachment checksum mismatch",400);
+ await store().set(key,bytes,{metadata:{name:meta.name,contentType:meta.type,size:meta.size,uploadedAt:meta.uploadedAt,uploadedBy:meta.uploadedBy}});
+ return json({ok:true,id:meta.id,size:meta.size,sha256:hash});
+}
+
 export default async (req: Request, context: Context): Promise<Response> => {
   if (new URL(req.url).hostname !== "greenacre-assets-test-20261022.netlify.app") {
     return text("Isolated test API is restricted to its dedicated test hostname", 503);
   }
   const path = new URL(req.url).pathname.replace(/^\/\.netlify\/functions\/api/, "/api");
 
+  if (req.method === "POST" && path === "/api/test-attachment-restore") return restoreTestAttachment(req);
   if (req.method === "POST" && path === "/api/test-restore") return restoreTestSnapshot(req);
   if (req.method === "GET" && path === "/api/health") return json({ ok: true, environment: "isolated-test", storage: STORE_NAME, emailsEnabled: false });
   if (req.method === "GET" && path === "/api/session") {
