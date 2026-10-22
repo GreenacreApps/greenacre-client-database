@@ -3099,6 +3099,7 @@ function renderClientRegister() {
       </tr>
     `;
   }).join("") : `<tr><td colspan="5">No matching clients found.</td></tr>`;
+  labelRegisterCells(body, ["Client", "Billing address", "Sites", "Assets", "Actions"]);
 }
 
 function renderAssetRegister() {
@@ -3140,6 +3141,7 @@ function renderAssetRegister() {
       </td>
     </tr>
   `).join("") : `<tr><td colspan="8">No matching assets found for this client.</td></tr>`;
+  labelRegisterCells(body, ["Site reference", "Site", "Asset reference", "Asset", "Location", "Flow m³/h", "Fan", "Actions"]);
   observeAssetThumbnails(rows.map(row => row.asset));
 }
 
@@ -3246,6 +3248,7 @@ function renderClientSites() {
       </td>
     </tr>
   `).join("") : `<tr><td colspan="4">No matching sites found.</td></tr>`;
+  labelRegisterCells(body, ["Reference", "Site", "Assets", "Actions"]);
   observeSiteThumbnails(sites);
 }
 
@@ -5328,4 +5331,11 @@ function observeAssetThumbnails(assets) {
     drainThumbnailQueue();
   }, {rootMargin: "160px"});
   document.querySelectorAll("#assetRegisterList [data-asset-thumbnail]").forEach(element => assetThumbnailObserver.observe(element));
+}
+
+function labelRegisterCells(body, labels) {
+  for (const row of body.rows) {
+    if (row.cells.length !== labels.length) continue;
+    Array.from(row.cells).forEach((cell, index) => {cell.dataset.label = labels[index];});
+  }
 }
