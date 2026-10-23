@@ -34,13 +34,21 @@ No database migration, initial seed, overwrite, attachment move or contact-histo
 
 The automated release test uses synthetic in-memory stores only. It checks production/preview storage selection, authentication, version conflicts, lossless data roundtrip, contact-import exclusion, project values, selected-cover fallback and PDF exclusion.
 
-## Remaining gates before publication
+## Production preparation verified — 23 October 2026
 
-1. Sign in to Netlify and record the currently PUBLISHED deployment ID/permalink and production branch. Match its source commit to the rollback reference; investigate any mismatch.
-2. Confirm the previous deployment's rollback/publish action is available. Do not execute rollback during preparation.
-3. Obtain a fresh read-only production backup immediately before publication. Existing full backup is Greenacre_Asset_Full_Backup_2026-10-22.zip, containing database JSON, manifest and all 30 attachments. Do not put client data, backups or credentials in Git.
-4. Record current data version/counts and attachment IDs; earlier baseline was version 1424, 2 clients, 130 sites, 206 assets, 17 custom fields and 30 attachment files. Re-read, do not assume this baseline is still current.
-5. Obtain Peter's approval to deploy the reviewed release. Preparing this branch/PR does not publish it.
+- Netlify sign-in completed. Published production is main@76aff30, matching the pinned rollback source.
+- Rollback deployment: 6a994e4de8ac3d0008ad266e.
+- Deployment details: https://app.netlify.com/projects/greenacreclientassetdatabase/deploys/6a994e4de8ac3d0008ad266e
+- Immutable permalink: https://6a994e4de8ac3d0008ad266e--greenacreclientassetdatabase.netlify.app
+- The same project's older completed production deploy exposes Publish deploy. The recovery control was inspected without clicking it. No live rollback drill was performed.
+- Release code at 6c39f51a52607c6b4e3976e3fad9e2ae7c002708 built successfully as deploy preview 6ada1f464fcbeb19c8957ca6 (12 seconds).
+- Fresh read-only database backup: Greenacre_Asset_PreRelease_2026-10-23_R1425.json, 224752 bytes; version 1425; 2 clients, 130 sites, 206 assets, 17 custom fields. Saved separately from Git.
+- All 30 current live attachment IDs across 16 asset folders exactly match Greenacre_Asset_Full_Backup_2026-10-22.zip. All 30 archived file SHA-256 checks passed. Retain that full backup together with the fresh database JSON.
+- No production code or data was changed during preparation.
+
+## Remaining gate before publication
+
+Obtain Peter's final approval to deploy this reviewed release. Immediately before publishing, recheck the published baseline and data version; refresh the backup if legitimate user edits occurred. Preparation does not publish the release.
 
 ## Deployment after approval
 
@@ -62,4 +70,4 @@ Fallback if the old deploy is unavailable: create a revert release restoring the
 
 Code rollback retains the current data store and all edits/uploads made since deployment. It is NOT a backup restore. Do not restore the pre-release database by default, because that could erase legitimate subsequent edits. A data restore needs a separate reconciliation and explicit approval.
 
-No live rollback drill has been performed; that would change production. The source recovery point is created; exact Netlify deployment rollback verification awaits sign-in.
+No live rollback drill has been performed; that would change production. The source recovery point and exact published Netlify deployment are recorded above; the Publish deploy recovery control was verified on an older completed deploy.
