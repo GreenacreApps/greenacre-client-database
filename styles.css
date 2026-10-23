@@ -1051,3 +1051,163 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Isolated test redesign: Greenacre asset workspace */
+:root {--brand:#226653;--brand-dark:#174937;--line:#dde6e0;--shadow:0 3px 18px rgba(24,55,39,.045)}
+body {background:#f3f6f3;font-family:Inter,"Segoe UI",Arial,sans-serif}
+.app-header {padding:12px 26px;grid-template-columns:130px 1fr auto;gap:14px;position:relative}
+.brand-logo {width:130px;max-height:70px;object-fit:contain}
+.title-block {justify-self:start;text-align:left;padding-left:20px;border-left:1px solid var(--line)}
+.header-actions {gap:8px}.header-actions button,.file-btn {font-size:12px;padding:8px 11px}
+.sync-status-stack {min-height:0;min-width:0}.sync-status-detail {display:none}
+#userControls {flex-basis:100%;justify-content:flex-end}.user-pill {font-size:11px;color:var(--muted)}
+.tabs {display:none}.panel {padding:24px;border-radius:14px}.panel-head {margin-bottom:20px}
+button,.file-btn {border-radius:8px;transition:background .15s}button:focus-visible,a:focus-visible,summary:focus-visible {outline:3px solid #b78b29;outline-offset:3px}
+.danger-btn {padding:7px 10px;font-weight:500;font-size:12px}
+main {width:min(1440px,calc(100vw - 64px));margin-top:28px}
+.database-intro {display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 24px}
+.database-intro h2 {font-size:30px;letter-spacing:-.8px;color:#173f30}.database-intro p:last-child {margin:7px 0;color:var(--muted);font-size:14px}
+.database-overview {display:flex;gap:12px}.database-overview article {background:white;border:1px solid var(--line);border-radius:12px;padding:14px 24px;min-width:110px}
+.database-overview span {display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}.database-overview strong {font-size:27px;color:var(--brand)}
+.database-search {position:relative;max-width:650px;margin-bottom:18px}.database-search label {margin-bottom:6px}.database-search input {padding:13px 16px;border-radius:10px;box-shadow:var(--shadow)}
+.database-search-results {position:absolute;top:100%;left:0;right:0;max-height:420px;overflow:auto;z-index:20;background:white;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:12px}
+.search-result {padding:12px;border-bottom:1px solid var(--line);display:flex;gap:7px;flex-wrap:wrap}.search-result small,.search-result strong {width:100%}.search-result span {font-size:12px;color:var(--muted)}.search-result button {font-size:12px;padding:5px 9px}
+.database-breadcrumbs {display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--muted);font-size:13px;flex-wrap:wrap}.database-breadcrumbs button {background:none;border:0;color:var(--brand);padding:3px;font-weight:600}.database-breadcrumbs [aria-current] {font-weight:650;color:var(--ink)}
+.client-contact-panel {display:none!important}.client-detail-layout {grid-template-columns:1fr}
+.site-identity {display:flex;align-items:center;gap:14px;min-width:260px}.site-identity small {display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.site-thumbnail {display:grid;place-items:center;width:88px;height:62px;flex-shrink:0;background:#ecf1ed;border:1px solid var(--line);border-radius:9px;overflow:hidden;color:#657467;font-size:10px;text-align:center}
+.site-thumbnail a {width:100%;height:100%;display:block}.site-thumbnail img {width:100%;height:100%;object-fit:cover;display:block}
+.quote-search-wrap {margin-top:0}.quote-search-wrap table,#clientRegisterPanel table {min-width:700px}.quote-search-wrap td:nth-child(5),.quote-search-wrap td:nth-child(6),.quote-search-wrap td:nth-child(7) {min-width:0}
+#clientSitesPanel table {min-width:620px}td {padding:13px 12px}th {padding:11px 12px;background:#edf3ef;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+tr.clickable-row:hover td {background:#f4f8f5}.table-wrap {border-radius:10px}.filter-row th {top:38px}.filter-row input {font-weight:400}
+.asset-groups {display:grid;gap:14px}.asset-groups details {border:1px solid var(--line);border-radius:10px;background:#fbfcfb}.asset-groups summary {cursor:pointer;padding:15px;font-size:14px;font-weight:650;color:var(--brand)}.asset-groups details>.form-grid {padding:0 16px 18px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.autosave-note {font-size:12px;color:var(--muted);margin:5px 0 0}.attachment-row {border-radius:9px}.custom-field-item {box-shadow:none}
+@media(max-width:1000px){.database-intro {align-items:flex-start}.database-overview article {padding:12px;min-width:75px}.app-header {grid-template-columns:100px 1fr}.brand-logo{width:100px}.header-actions {grid-column:1/-1;justify-self:stretch;justify-content:flex-end}.asset-groups details>.form-grid {grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){main {width:calc(100vw - 24px);margin-top:18px}.app-header {padding:10px 12px}.title-block{grid-column:2;justify-self:start;padding-left:12px}.brand-block{grid-column:1}.brand-logo{width:90px}.app-header h1{font-size:16px}.header-actions{grid-column:1/-1}.database-intro{display:block}.database-intro h2{font-size:25px}.database-overview{margin-top:16px;gap:8px}.database-overview article{flex:1;padding:10px 14px}.database-overview strong{font-size:24px}.panel{padding:14px}.panel-head{align-items:flex-start}.panel-head .header-actions{justify-content:flex-start}.asset-groups details>.form-grid{grid-template-columns:1fr}.site-thumbnail{width:68px;height:52px}.site-identity{min-width:210px}.database-breadcrumbs{font-size:12px}.database-search{max-width:none}}
+
+.asset-photo-gallery {display:flex;flex-wrap:wrap;gap:12px;margin:0 0 22px;padding:14px;background:#f4f8f5;border:1px solid var(--line);border-radius:12px}
+.asset-photo-gallery[hidden] {display:none}
+.asset-photo-preview {display:block;width:180px;color:var(--brand);text-decoration:none;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:white}
+.asset-photo-preview img {display:block;width:100%;height:125px;object-fit:cover}
+.asset-photo-preview span {display:block;padding:8px 10px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.asset-photo-preview:hover {box-shadow:0 4px 14px #173f3026}
+@media(max-width:700px){.asset-photo-preview{width:calc(50% - 6px);min-width:120px}.asset-photo-preview img{height:105px}}
+
+/* Touch layouts keep every register readable without horizontal scrolling. */
+.client-database-app main, .client-database-app .panel, .client-database-app .asset-groups,
+.client-database-app .header-actions, .client-database-app .database-intro > div {min-width:0}
+.client-database-app .database-breadcrumbs {overflow-wrap:anywhere}
+.client-database-app .asset-photo-preview {max-width:100%}
+@media(max-width:1100px) {
+  .client-database-app button, .client-database-app .file-btn {min-height:44px}
+  .client-database-app input, .client-database-app select, .client-database-app textarea {font-size:16px;min-height:44px}
+  .client-database-app .database-intro {gap:18px}
+  .client-database-app .database-intro h2 {font-size:27px}
+  .client-database-app .panel-head .header-actions {justify-content:flex-start}
+  .client-database-app .additional-data-admin {grid-template-columns:minmax(0,1fr) minmax(110px,160px)}
+  .client-database-app .custom-field-control {grid-template-columns:minmax(0,1fr);gap:6px}
+  .client-database-app .custom-field-control button {justify-self:start}
+}
+@media(max-width:1024px) {
+  .client-database-app main {width:calc(100% - 32px)}
+  .client-database-app .app-header {grid-template-columns:110px minmax(0,1fr);padding:12px 16px}
+  .client-database-app .app-header > .header-actions {grid-column:1/-1;width:100%;justify-content:space-between}
+  .client-database-app #userControls {flex-basis:auto;margin-left:auto}
+  .client-database-app .panel {padding:18px}
+  .client-database-app .database-overview {flex-shrink:0}
+  .client-database-app .site-identity {min-width:0;gap:10px}
+  .client-database-app .site-identity strong {overflow-wrap:anywhere}
+  .client-database-app .site-thumbnail {width:76px;height:58px}
+  .client-database-app #clientRegisterPanel .table-wrap,
+  .client-database-app #clientSitesPanel .table-wrap,
+  .client-database-app #clientAssetRegisterPanel .table-wrap {border:0;overflow:visible;background:transparent}
+  .client-database-app #clientRegisterPanel table,
+  .client-database-app #clientSitesPanel table,
+  .client-database-app #clientAssetRegisterPanel table {display:block;min-width:0;width:100%}
+  .client-database-app #clientRegisterPanel thead,
+  .client-database-app #clientSitesPanel thead,
+  .client-database-app #clientAssetRegisterPanel thead {display:block}
+  .client-database-app #clientRegisterPanel thead tr:first-child,
+  .client-database-app #clientSitesPanel thead tr:first-child,
+  .client-database-app #clientAssetRegisterPanel thead tr:first-child {display:none}
+  .client-database-app .filter-row {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+  .client-database-app .filter-row th {display:block;position:static;padding:0;background:none;border:0}
+  .client-database-app .filter-row th:empty {display:none}
+  .client-database-app .filter-row input {width:100%;padding:10px}
+  .client-database-app #clientList,
+  .client-database-app #clientSitesBody,
+  .client-database-app #assetRegisterList {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .client-database-app #clientList tr,
+  .client-database-app #clientSitesBody tr,
+  .client-database-app #assetRegisterList tr {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:12px;padding:16px;border:1px solid var(--line);border-radius:12px;background:white;min-width:0}
+  .client-database-app #clientList td,
+  .client-database-app #clientSitesBody td,
+  .client-database-app #assetRegisterList td {display:block;min-width:0;padding:0;border:0;white-space:normal;overflow-wrap:anywhere;font-size:13px}
+  .client-database-app td[data-label]::before {content:attr(data-label);display:block;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .client-database-app #clientList td:first-child,
+  .client-database-app #clientList td:nth-child(2),
+  .client-database-app #clientSitesBody td:nth-child(2),
+  .client-database-app #assetRegisterList td:nth-child(4),
+  .client-database-app #assetRegisterList td:nth-child(5) {grid-column:1/-1}
+  .client-database-app #clientList td:first-child,
+  .client-database-app #clientSitesBody td:nth-child(2),
+  .client-database-app #assetRegisterList td:nth-child(4) {order:-1;font-size:15px}
+  .client-database-app #clientList td:first-child::before,
+  .client-database-app #clientSitesBody td:nth-child(2)::before,
+  .client-database-app #assetRegisterList td:nth-child(4)::before,
+  .client-database-app td[data-label="Actions"]::before {display:none}
+  .client-database-app #clientList td:last-child,
+  .client-database-app #clientSitesBody td:last-child,
+  .client-database-app #assetRegisterList td:last-child {grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding-top:10px;border-top:1px solid var(--line)}
+  .client-database-app #clientAssetRegisterPanel .filter-row th:nth-child(1),
+  .client-database-app #clientAssetRegisterPanel .filter-row th:nth-child(2),
+  .client-database-app #assetRegisterList td[data-label]:nth-child(1),
+  .client-database-app #assetRegisterList td[data-label]:nth-child(2) {display:none}
+  .client-database-app #clientList td[colspan],
+  .client-database-app #clientSitesBody td[colspan],
+  .client-database-app #assetRegisterList td[colspan] {grid-column:1/-1}
+  .client-database-app .attachment-row {grid-template-columns:minmax(0,1fr) auto}
+  .client-database-app .attachment-row>span:first-child {grid-column:1/-1;overflow-wrap:anywhere}
+  .client-database-app .attachment-actions {flex-wrap:wrap;width:100%}
+  .client-database-app .attachment-actions input {max-width:100%;width:100%;font-size:13px}
+}
+@media(max-width:600px) {
+  .client-database-app main {width:calc(100% - 24px);margin-top:18px}
+  .client-database-app .app-header {grid-template-columns:90px minmax(0,1fr);gap:10px;padding:10px 12px}
+  .client-database-app .brand-logo {width:90px}
+  .client-database-app .title-block {padding-left:10px}
+  .client-database-app .app-header h1 {font-size:15px}
+  .client-database-app .app-header > .header-actions {gap:8px}
+  .client-database-app #userControls {flex-basis:100%;width:100%;margin-left:0;justify-content:flex-start}
+  .client-database-app .user-pill {flex:1;overflow-wrap:anywhere;font-size:10px}
+  .client-database-app .sync-status-stack {width:auto;align-items:flex-start}
+  .client-database-app .database-intro {display:block;margin-bottom:20px}
+  .client-database-app .database-intro h2 {font-size:25px}
+  .client-database-app .database-overview {margin-top:16px;gap:8px}
+  .client-database-app .database-overview article {min-width:0;flex:1;padding:10px 12px}
+  .client-database-app .database-overview strong {font-size:24px}
+  .client-database-app .panel {padding:14px}
+  .client-database-app .panel-head {gap:12px}
+  .client-database-app .panel-head .header-actions {width:100%;gap:8px}
+  .client-database-app .panel-head .header-actions button {flex:1}
+  .client-database-app #clientList,
+  .client-database-app #clientSitesBody,
+  .client-database-app #assetRegisterList {grid-template-columns:1fr}
+  .client-database-app .asset-groups details>.form-grid,
+  .client-database-app #assetCustomFieldsPanel .custom-field-list,
+  .client-database-app .additional-data-admin {grid-template-columns:1fr}
+  .client-database-app .modal-card {padding:14px;max-height:calc(100dvh - 32px);overflow:auto}
+  .client-database-app .modal-backdrop {padding:12px}
+  .client-database-app .asset-photo-gallery {padding:10px;gap:10px}
+  .client-database-app .asset-photo-preview {width:calc(50% - 5px);min-width:0}
+  .client-database-app .asset-photo-preview img {height:100px}
+  .client-database-app .database-search-results {max-height:55dvh}
+}
+
+@media(max-width:1024px){.client-database-app #assetRegisterList .num{text-align:left}.client-database-app #assetRegisterList td[colspan]{display:block!important;grid-column:1/-1}}
+
+/* Give file links the same touch area as buttons without restricting native zoom. */
+@media(max-width:1100px){.client-database-app .attachment-row-actions a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:10px 12px}.client-database-app .asset-groups label{overflow-wrap:anywhere}}
+
+.asset-photo-choice{display:flex;flex-direction:column;align-items:stretch;gap:7px;max-width:100%;width:180px}.asset-photo-choice .asset-photo-preview{width:100%}.asset-photo-choice button{min-height:44px;font-size:12px}.is-cover-photo{outline:2px solid var(--brand);outline-offset:1px}.cover-photo-label{display:block;font-size:12px;font-weight:700;color:var(--brand);padding:10px;text-align:center}.automatic-cover-btn{align-self:flex-end;min-height:44px}@media(max-width:600px){.asset-photo-choice{width:calc(50% - 5px);min-width:0}.asset-photo-choice .asset-photo-preview{width:100%}.automatic-cover-btn{width:100%}}
